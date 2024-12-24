@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>CAN Bus Data</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>CAN Bus Data</h1>
+    <form id="filter-form">
+        <label for="filter-id">Filter by CAN IDs (Hex, comma-separated):</label>
+        <input type="text" id="filter-id" placeholder="e.g., 0x277,0x123">
+        <button type="submit">Apply Filter</button>
+        <label>
+            <input type="checkbox" id="fixed-toggle">
+            Fixed
+        </label>
+    </form>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Data</th>
+                <th>Extended</th>
+                <th>Error</th>
+                <th>RTR</th>
+            </tr>
+        </thead>
+        <tbody id="can-data"></tbody>
+    </table>
+
+    <script>
+        const tableBody = document.getElementById('can-data');
+        const fixedToggle = document.getElementById('fixed-toggle');
+        const filterForm = document.getElementById('filter-form');
+        let filterIds = [];
+
+        const socket = new WebSocket("ws://localhost:8080/ws");
+        socket.onmessage = (event) => {
+            const message = JSON.parse(event.data);
+            console.log('Received:', message);
+
+            const table = document.getElementById('can-data');
+            const row = document.createElement('tr');
+            row.innerHTML = `
+        <td>0x${message.id.toString(16).toUpperCase()}</td>
+        <td>${message.data.map(byte => byte.toString(16).padStart(2, '0')).join(' ')}</td>
+        <td>${message.is_extended ? 'Yes' : 'No'}</td>
+        <td>${message.is_error ? 'Yes' : 'No'}</td>
+        <td>${message.is_rtr ? 'Yes' : 'No'}</td>
+    `;
+            table.appendChild(row);
+
+            // Keep table to 100 rows max
+            if (table.rows.length > 100) {
+                table.deleteRow(0);
+            }
+        };
+
+        socket.onclose = () => {
+            console.log("WebSocket connection closed.");
+        };
+
+        socket.onerror = (error) => {
+            console.error("WebSocket error:", error);
+        };
+
+        filterForm.addEventListener('submit', event => {
+            event.preventDefault();
+            const filterInput = document.getElementById('filter-id').value.trim();
+            filterIds = filterInput
+                ? filterInput.split(',').map(id => parseInt(id, 16))
+                : [];
+            fetchMessages();
+        });
+
+        async function fetchMessages() {
+            try {
+                const query = filterIds.map(id => `filter_id=${id}`).join('&');
+                const response = await fetch(`/messages?${query}`);
+                const messages = await response.json();
+                updateTable(messages, fixedToggle.checked);
+            } catch (error) {
+                console.error('Failed to fetch messages:', error);
+            }
+        }
+
+        function updateTable(messages, fixed) {
+            tableBody.innerHTML = '';
+            if (fixed) {
+                const uniqueMessages = new Map(messages.map(msg => [msg.id, msg]));
+                messages = Array.from(uniqueMessages.values());
+            }
+            messages.forEach(msg => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>0x${msg.id.toString(16).toUpperCase()}</td>
+                    <td>${msg.data.map(b => b.toString(16).padStart(2, '0')).join(' ')}</td>
+                    <td>${msg.is_extended ? 'Yes' : 'No'}</td>
+                    <td>${msg.is_error ? 'Yes' : 'No'}</td>
+                    <td>${msg.is_rtr ? 'Yes' : 'No'}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        fetchMessages();
+    </script>
+</body>
+
+</html>

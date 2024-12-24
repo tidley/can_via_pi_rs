@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>CAN Bus Data</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>CAN Bus Data</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Data</th>
+                <th>Extended</th>
+                <th>Error</th>
+                <th>RTR</th>
+            </tr>
+        </thead>
+        <tbody id="can-data">
+            <!-- CAN messages will be inserted here -->
+        </tbody>
+    </table>
+
+    <script>
+        async function fetchCANMessages() {
+            const tableBody = document.getElementById('can-data');
+            tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Loading...</td></tr>';
+
+            try {
+                const response = await fetch('/messages');
+                const data = await response.json();
+
+                if (!Array.isArray(data)) {
+                    throw new Error('Unexpected response format');
+                }
+
+                tableBody.innerHTML = '';
+                if (data.length === 0) {
+                    const row = document.createElement('tr');
+                    const cell = document.createElement('td');
+                    cell.textContent = 'No messages received';
+                    cell.colSpan = 5;
+                    cell.style.textAlign = 'center';
+                    row.appendChild(cell);
+                    tableBody.appendChild(row);
+                    return;
+                }
+
+                data.forEach(msg => {
+                    const row = document.createElement('tr');
+
+                    const idCell = document.createElement('td');
+                    idCell.textContent = `0x${msg.id.toString(16).toUpperCase()}`;
+                    row.appendChild(idCell);
+
+                    const dataCell = document.createElement('td');
+                    dataCell.textContent = (msg.data || []).map(byte => byte.toString(16).padStart(2, '0')).join(' ');
+                    row.appendChild(dataCell);
+
+                    const extendedCell = document.createElement('td');
+                    extendedCell.textContent = msg.is_extended;
+                    row.appendChild(extendedCell);
+
+                    const errorCell = document.createElement('td');
+                    errorCell.textContent = msg.is_error;
+                    row.appendChild(errorCell);
+
+                    const rtrCell = document.createElement('td');
+                    rtrCell.textContent = msg.is_rtr;
+                    row.appendChild(rtrCell);
+
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error fetching CAN messages:', error);
+                tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Error fetching messages</td></tr>';
+            }
+        }
+
+        // Fetch CAN messages every 2 seconds
+        setInterval(fetchCANMessages, 2000);
+    </script>
+</body>
+
+</html>

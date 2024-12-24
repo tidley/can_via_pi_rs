@@ -1,0 +1,18 @@
+[package]
+name = "can-via-pi"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+actix = "0.11"
+actix-web = "4"
+actix-web-actors = "4.3.1"  # Ensure this is the correct version
+socketcan = "3.3.1"
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+actix-files = "0.6"
+env_logger = "0.11.6"
+log = "0.4.22"
+futures-util = "0.3.30"  # Adjusted to a compatible version
+actix-ws = "0.3.0"

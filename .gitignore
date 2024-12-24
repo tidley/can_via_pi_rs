@@ -1,0 +1,62 @@
+# Target directory: Contains compiled artifacts
+/target/
+
+# Incremental compilation files
+**/*.incremental/
+
+# Fingerprint files
+**/.fingerprint/
+
+# Cargo lock file (if your project is a library, consider including this)
+/Cargo.lock
+
+# Build scripts output
+/target/debug/build/
+!**/*.timestamp
+
+# Generated documentation
+/target/doc/
+
+# Dependency artifacts
+/target/debug/.cargo-lock
+/target/release/.cargo-lock
+
+# Temporary files
+*.rs.bk
+
+# Editor-specific configurations
+# VSCode
+.vscode/
+*.code-workspace
+
+# IntelliJ IDEA/CLion
+.idea/
+*.iml
+
+# macOS Finder metadata
+.DS_Store
+
+# Linux Swap Files
+*.swp
+
+# Backup Files
+*.bak
+*.tmp
+
+# Logs
+*.log
+
+# Debug and core dumps
+*.dmp
+*.core
+
+# Node-related files (if a frontend is part of the project)
+node_modules/
+
+# Environment configuration
+.env
+.env.local
+deps/
+build/
+gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf/
+debug/
